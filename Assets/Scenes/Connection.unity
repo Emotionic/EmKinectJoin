@@ -674,6 +674,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ef88e12049093946ab9a9b0fdf77d1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  InputIP: {fileID: 770857549}
+  BtnConnect: {fileID: 419319243}
+  Label: {fileID: 749278738}
 --- !u!4 &782658789
 Transform:
   m_ObjectHideFlags: 0

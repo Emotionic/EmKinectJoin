@@ -9,9 +9,6 @@ using UnityEngine.SceneManagement;
 
 public class WSServer : MonoBehaviour
 {
-    public delegate void EndPerformHandler();
-    public event EndPerformHandler EndPerform;
-
     public bool IsConnected
     {
         get
@@ -24,15 +21,37 @@ public class WSServer : MonoBehaviour
     private Queue msgQueue;
     private string Address = null;
 
+    private InputField _InputIP;
+    private Button _BtnConnect;
+    private Text _Label;
+
     public void BtnConnect_Clicked()
     {
-        Address = GameObject.Find("InputIP").GetComponent<InputField>().text;
-        SceneManager.LoadScene("MainScene");
+        GetUIComponents();
+
+        if (string.IsNullOrEmpty(_InputIP.text))
+        {
+            _Label.text = "エラー：IPアドレスが空です";
+            return;
+        }
+
+        Address = _InputIP.text;
+        _BtnConnect.interactable = false;
+        _Label.text = "しばらくお待ち下さい...";
+        Canvas.ForceUpdateCanvases();
+
+        StartCoroutine(DelayMethod(1.0f, () =>
+        {
+            Connect();
+            Send("KINECTJOIN", "INIT");
+            _Label.text = "演技が開始するまでお待ち下さい...";
+        }));
+        
     }
 
     public void Connect()
     {
-        var res = RequestHTTP(Method.GET, "check");
+        var res = RequestHTTP(Method.GET, "emkinectjoin");
         if (res != "ok")
             throw new Exception("Cannot connect EmServerWS");
 
@@ -119,9 +138,26 @@ public class WSServer : MonoBehaviour
 
                     switch (msg[1])
                     {
+                        /* 初期化 */
+                        case "INIT":
+                            SceneManager.LoadScene("MainScene");
+                            break;
+
+                        /* 再起動 */
+                        case "RESTART":
+                            SceneManager.LoadScene("Connection");
+
+                            GetUIComponents();
+                            _InputIP.text = Address;
+                            _BtnConnect.interactable = false;
+                            _Label.text = "演技が開始するまでお待ち下さい...";
+
+                            Send("KINECTJOIN", "INIT");
+                            break;
+
                         /* 演技の終了 */
                         case "ENDPERFORM":
-                            EndPerform();
+                            SceneManager.LoadScene("FinishScene");
                             break;
 
                         default:
@@ -136,6 +172,14 @@ public class WSServer : MonoBehaviour
             }
         }
 
+    }
+
+    private void GetUIComponents()
+    {
+        var canvas = GameObject.Find("Canvas").transform;
+        _InputIP = canvas.Find("InputIP").GetComponent<InputField>();
+        _BtnConnect = canvas.Find("BtnConnect").GetComponent<Button>();
+        _Label = canvas.Find("Label").GetComponent<Text>();
     }
 
     private string RequestHTTP(Method method, string action, string value = null)
@@ -181,6 +225,18 @@ public class WSServer : MonoBehaviour
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// 渡された処理を指定時間後に実行する
+    /// </summary>
+    /// <param name="waitTime">遅延時間[秒]</param>
+    /// <param name="action">実行したい処理</param>
+    /// <returns></returns>
+    private IEnumerator DelayMethod(float waitTime, Action action)
+    {
+        yield return new WaitForSeconds(waitTime);
+        action();
     }
 
 }

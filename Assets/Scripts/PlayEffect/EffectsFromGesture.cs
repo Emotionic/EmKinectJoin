@@ -77,7 +77,6 @@ namespace Assets.KinectView.Scripts
             if (GameObject.Find("WSServer") != null)
             {
                 _WSServer = GameObject.Find("WSServer").GetComponent<WSServer>();
-                _WSServer.EndPerform += _WSServer_EndPerform;
             }
 
             _GestureManager = GestureManager.GetComponent<GestureManager>();
@@ -95,12 +94,6 @@ namespace Assets.KinectView.Scripts
 
             _RbColor = new RainbowColor(0, 0.001f);
 
-        }
-
-        private void _WSServer_EndPerform()
-        {
-            // 演技の終了時
-            SceneManager.LoadScene("FinishScene");
         }
 
         // Update is called once per frame
